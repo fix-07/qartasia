@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>منظومة القرطاسية</title>
+  <meta name="description" content="منظومة لإدارة مخزون القرطاسية ومبيعاتها وفواتيرها، تعمل داخل المتصفح وتحفظ بياناتها محلياً.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cg transform='rotate(45 16 16)'%3E%3Crect x='11.5' y='2.5' width='9' height='19' rx='1.5' fill='%23141414'/%3E%3Crect x='11.5' y='7' width='9' height='1.6' fill='%23fff'/%3E%3Cpath d='M11.5 23.2h9L16 31z' fill='%23fff' stroke='%23141414' stroke-width='1.6' stroke-linejoin='round'/%3E%3Cpath d='M14.3 27.6h3.4L16 31z' fill='%23141414'/%3E%3C/g%3E%3C/svg%3E">
+
+  <!-- خط Cairo: أرقامه متساوية العرض فتصطفّ الأسعار والكميات في الأعمدة -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap">
+
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">انتقل إلى المحتوى</a>
+
+  <!-- =====================================================================
+       الأيقونات: تُعرَّف مرة واحدة هنا وتُستعمل في أي مكان عبر <use href="#i-…">
+       ===================================================================== -->
+  <svg class="sprite" aria-hidden="true" focusable="false">
+    <symbol id="i-dashboard" viewBox="0 0 24 24"><rect x="3" y="3" width="7.5" height="9.5" rx="1.5"/><rect x="13.5" y="3" width="7.5" height="5.5" rx="1.5"/><rect x="13.5" y="11.5" width="7.5" height="9.5" rx="1.5"/><rect x="3" y="15.5" width="7.5" height="5.5" rx="1.5"/></symbol>
+    <symbol id="i-box" viewBox="0 0 24 24"><path d="M3.5 7.5 12 3l8.5 4.5v9L12 21l-8.5-4.5z"/><path d="M3.5 7.5 12 12l8.5-4.5"/><path d="M12 12v9"/></symbol>
+    <symbol id="i-cart" viewBox="0 0 24 24"><circle cx="9" cy="19.5" r="1.4"/><circle cx="17.5" cy="19.5" r="1.4"/><path d="M2.5 4h2.7l2.2 10.6a1.5 1.5 0 0 0 1.5 1.2h8.3a1.5 1.5 0 0 0 1.5-1.2L20.5 8H6.1"/></symbol>
+    <symbol id="i-receipt" viewBox="0 0 24 24"><path d="M5 3h14v18l-2.33-1.5L14.33 21 12 19.5 9.67 21l-2.34-1.5L5 21z"/><path d="M9 8h6M9 12h6"/></symbol>
+    <symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.25"/><path d="M2.75 20c0-3.4 2.8-5.75 6.25-5.75s6.25 2.35 6.25 5.75"/><path d="M15.5 4.9a3.25 3.25 0 0 1 0 6.2"/><path d="M17.5 14.6c2.2.6 3.75 2.6 3.75 5.4"/></symbol>
+    <symbol id="i-settings" viewBox="0 0 24 24"><path d="M4 7h8M18 7h2M4 17h2M12 17h8"/><circle cx="15" cy="7" r="2.5"/><circle cx="9" cy="17" r="2.5"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-minus" viewBox="0 0 24 24"><path d="M5 12h14"/></symbol>
+    <symbol id="i-edit" viewBox="0 0 24 24"><path d="M4 20v-3.5L15.75 4.75a2.47 2.47 0 0 1 3.5 3.5L7.5 20z"/><path d="m14 6.5 3.5 3.5"/></symbol>
+    <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16"/><path d="M9.5 7V4.5h5V7"/><path d="m6.5 7 .9 12a1.5 1.5 0 0 0 1.5 1.4h6.2a1.5 1.5 0 0 0 1.5-1.4l.9-12"/><path d="M10 11v5.5M14 11v5.5"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.4-4.4"/></symbol>
+    <symbol id="i-close" viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"/></symbol>
+    <symbol id="i-print" viewBox="0 0 24 24"><path d="M7 8V3.5h10V8"/><path d="M7 17H5a1.5 1.5 0 0 1-1.5-1.5v-6A1.5 1.5 0 0 1 5 8h14a1.5 1.5 0 0 1 1.5 1.5v6A1.5 1.5 0 0 1 19 17h-2"/><path d="M7 13.5h10v7H7z"/></symbol>
+    <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 4v11"/><path d="m7.5 11 4.5 4.5 4.5-4.5"/><path d="M4.5 19.5h15"/></symbol>
+    <symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 15.5v-11"/><path d="M7.5 9 12 4.5 16.5 9"/><path d="M4.5 19.5h15"/></symbol>
+    <symbol id="i-restock" viewBox="0 0 24 24"><path d="M12 3v9"/><path d="m8.5 8.5 3.5 3.5 3.5-3.5"/><path d="M4 13v5.5A1.5 1.5 0 0 0 5.5 20h13a1.5 1.5 0 0 0 1.5-1.5V13"/></symbol>
+    <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="2.75"/></symbol>
+    <symbol id="i-undo" viewBox="0 0 24 24"><path d="M5 9h9.5a5.5 5.5 0 0 1 0 11H9"/><path d="M9 5 5 9l4 4"/></symbol>
+    <symbol id="i-sort" viewBox="0 0 24 24"><path d="m7 10 5-5 5 5"/><path d="M12 5v14"/></symbol>
+  </svg>
+
+  <div class="app">
+
+    <!-- ===================== الشريط الجانبي ===================== -->
+    <aside class="sidebar">
+      <a class="brand" href="#dashboard" aria-label="الانتقال إلى لوحة المؤشرات">
+        <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true">
+          <g transform="rotate(45 16 16)">
+            <rect x="11.5" y="2.5" width="9" height="19" rx="1.5" fill="currentColor"/>
+            <rect class="brand-mark-gap" x="11.5" y="7" width="9" height="1.6"/>
+            <path class="brand-mark-wood" d="M11.5 23.2h9L16 31z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+            <path d="M14.3 27.6h3.4L16 31z" fill="currentColor"/>
+          </g>
+        </svg>
+        <span class="brand-text">
+          <strong class="brand-name" data-store-name>قرطاسيتي</strong>
+          <span class="brand-sub">منظومة المخزون والمبيعات</span>
+        </span>
+      </a>
+
+      <nav class="nav" aria-label="أقسام المنظومة">
+        <a class="nav-item" href="#dashboard" data-view="dashboard"><svg class="icon"><use href="#i-dashboard"/></svg><span class="nav-full">لوحة المؤشرات</span><span class="nav-short">المؤشرات</span></a>
+        <a class="nav-item" href="#inventory" data-view="inventory"><svg class="icon"><use href="#i-box"/></svg><span class="nav-full">المخزون</span><span class="nav-short">المخزون</span></a>
+        <a class="nav-item" href="#pos" data-view="pos"><svg class="icon"><use href="#i-cart"/></svg><span class="nav-full">نقطة البيع</span><span class="nav-short">البيع</span></a>
+        <a class="nav-item" href="#invoices" data-view="invoices"><svg class="icon"><use href="#i-receipt"/></svg><span class="nav-full">الفواتير</span><span class="nav-short">الفواتير</span></a>
+        <a class="nav-item" href="#contacts" data-view="contacts"><svg class="icon"><use href="#i-users"/></svg><span class="nav-full">العملاء والموردون</span><span class="nav-short">العملاء</span></a>
+      </nav>
+
+      <div class="sidebar-foot">
+        <a class="nav-item" href="#settings" data-view="settings" title="الإعدادات"><svg class="icon"><use href="#i-settings"/></svg><span class="nav-full">الإعدادات</span></a>
+        <p class="save-state" id="save-state">البيانات محفوظة في هذا المتصفح</p>
+      </div>
+    </aside>
+
+    <!-- ===================== المحتوى ===================== -->
+    <main class="canvas" id="main" tabindex="-1">
+
+      <!-- ---------- 1) لوحة المؤشرات ---------- -->
+      <section class="view" id="view-dashboard" aria-labelledby="h-dashboard">
+        <header class="page-head">
+          <div>
+            <h1 id="h-dashboard">لوحة المؤشرات</h1>
+            <p class="page-sub" id="dash-finding"></p>
+          </div>
+          <a class="btn primary" href="#pos"><svg class="icon"><use href="#i-plus"/></svg>بيع جديد</a>
+        </header>
+
+        <div class="notice" id="demo-notice" hidden>
+          <p>هذه بيانات تجريبية للتعرّف على المنظومة. حين تجهز للعمل ابدأ ببيانات فارغة.</p>
+          <div class="notice-actions">
+            <button type="button" class="link-btn" data-action="clear-all">البدء ببيانات فارغة</button>
+            <button type="button" class="link-btn" data-action="hide-demo-notice">إخفاء</button>
+          </div>
+        </div>
+
+        <!-- أرصدة المخزون: حاوية واحدة مقسومة بخطوط -->
+        <dl class="kpis" aria-label="ملخص المخزون">
+          <div class="kpi"><dt>عدد الأصناف</dt><dd id="kpi-products">0</dd></div>
+          <div class="kpi"><dt>القطع في المخزون</dt><dd id="kpi-units">0</dd></div>
+          <div class="kpi"><dt>قيمة المخزون بسعر البيع</dt><dd id="kpi-value">0.00</dd></div>
+        </dl>
+
+        <div class="grid">
+          <!-- مبيعات اليوم: المؤشرات الثلاثة تبدّل سلسلة الرسم -->
+          <article class="panel span-8" aria-labelledby="h-sales">
+            <h2 class="sr-only" id="h-sales">مبيعات اليوم وآخر 7 أيام</h2>
+            <div class="kpi-tabs" role="tablist" aria-label="مؤشر الرسم">
+              <button type="button" class="kpi-tab" role="tab" data-metric="revenue" aria-selected="true" aria-controls="sales-chart"><span class="kpi-tab-label">مبيعات اليوم</span><span class="kpi-tab-value" id="tab-revenue">0.00</span></button>
+              <button type="button" class="kpi-tab" role="tab" data-metric="invoices" aria-selected="false" aria-controls="sales-chart" tabindex="-1"><span class="kpi-tab-label">فواتير اليوم</span><span class="kpi-tab-value" id="tab-invoices">0</span></button>
+              <button type="button" class="kpi-tab" role="tab" data-metric="pieces" aria-selected="false" aria-controls="sales-chart" tabindex="-1"><span class="kpi-tab-label">قطع مباعة اليوم</span><span class="kpi-tab-value" id="tab-pieces">0</span></button>
+            </div>
+            <div class="chart-head">
+              <h3 id="chart-title">المبيعات في آخر 7 أيام</h3>
+              <p class="meta" id="chart-total"></p>
+            </div>
+            <div class="chart" id="sales-chart" role="tabpanel"></div>
+          </article>
+
+          <!-- تنبيهات المخزون المنخفض -->
+          <article class="panel span-4 panel-stretch" aria-labelledby="h-low">
+            <header class="panel-head">
+              <h2 id="h-low">مخزون منخفض</h2>
+            </header>
+            <ul class="rows" id="low-list"></ul>
+            <a class="card-link" id="low-all" href="#inventory" data-action="show-low">عرض كل ما يحتاج إلى تزويد</a>
+          </article>
+
+          <!-- آخر الفواتير -->
+          <article class="panel span-8 panel-stretch" aria-labelledby="h-recent">
+            <header class="panel-head">
+              <h2 id="h-recent">آخر الفواتير</h2>
+              <a class="card-link" href="#invoices">كل الفواتير</a>
+            </header>
+            <div id="recent-invoices"></div>
+          </article>
+
+          <!-- الأكثر مبيعاً -->
+          <article class="panel span-4 panel-stretch" aria-labelledby="h-top">
+            <header class="panel-head">
+              <h2 id="h-top">الأكثر مبيعاً</h2>
+              <span class="meta">آخر 7 أيام</span>
+            </header>
+            <ol class="rows" id="top-list"></ol>
+          </article>
+        </div>
+      </section>
+
+      <!-- ---------- 2) المخزون ---------- -->
+      <section class="view" id="view-inventory" aria-labelledby="h-inventory" hidden>
+        <header class="page-head">
+          <div>
+            <h1 id="h-inventory">المخزون</h1>
+            <p class="page-sub" id="inv-summary"></p>
+          </div>
+          <button type="button" class="btn primary" data-action="add-product"><svg class="icon"><use href="#i-plus"/></svg>إضافة صنف</button>
+        </header>
+
+        <div class="panel">
+          <div class="tabs" role="tablist" aria-label="حالة المخزون">
+            <button type="button" class="tab" role="tab" data-inv-tab="all" aria-selected="true">الكل <span class="tab-count" id="inv-count-all"></span></button>
+            <button type="button" class="tab" role="tab" data-inv-tab="low" aria-selected="false">يحتاج إلى تزويد <span class="tab-count" id="inv-count-low"></span></button>
+          </div>
+
+          <div class="toolbar">
+            <label class="search">
+              <span class="sr-only">بحث في الأصناف</span>
+              <svg class="icon"><use href="#i-search"/></svg>
+              <input class="input" type="search" id="inv-search" placeholder="ابحث باسم الصنف أو الفئة" autocomplete="off">
+            </label>
+            <label class="select-wrap">
+              <span class="sr-only">الفئة</span>
+              <select class="input" id="inv-category"></select>
+            </label>
+            <span class="toolbar-count" id="inv-shown" aria-live="polite"></span>
+          </div>
+
+          <table class="data-table" id="inv-table">
+            <thead>
+              <tr>
+                <th scope="col"><button type="button" class="sort-btn" data-sort="name">اسم الصنف</button></th>
+                <th scope="col" class="c-extra c-md-hide"><button type="button" class="sort-btn" data-sort="category">الفئة</button></th>
+                <th scope="col" class="c-extra num"><button type="button" class="sort-btn" data-sort="price"><span>السعر (<span data-currency>د.ل</span>)</span></button></th>
+                <th scope="col" class="num"><button type="button" class="sort-btn" data-sort="qty">الكمية المتوفرة</button></th>
+                <th scope="col" class="c-extra">الحالة</th>
+                <th scope="col" class="c-actions"><span class="sr-only">إجراءات</span></th>
+              </tr>
+            </thead>
+            <tbody id="inv-body"></tbody>
+          </table>
+          <div id="inv-empty"></div>
+          <div class="table-foot" id="inv-more" hidden>
+            <button type="button" class="btn" data-action="inv-more">عرض المزيد</button>
+            <span class="meta" id="inv-range"></span>
+          </div>
+        </div>
+      </section>
+
+      <!-- ---------- 3) نقطة البيع ---------- -->
+      <section class="view" id="view-pos" aria-labelledby="h-pos" hidden>
+        <header class="page-head">
+          <div>
+            <h1 id="h-pos">نقطة البيع</h1>
+            <p class="page-sub" id="pos-summary"></p>
+          </div>
+        </header>
+
+        <div class="pos">
+          <div class="pos-products">
+            <div class="toolbar">
+              <label class="search search-wide">
+                <span class="sr-only">بحث عن صنف</span>
+                <svg class="icon"><use href="#i-search"/></svg>
+                <input class="input" type="search" id="pos-search" placeholder="ابحث عن صنف ثم اضغط Enter لإضافته" autocomplete="off">
+              </label>
+            </div>
+            <div class="chips" id="pos-categories" role="group" aria-label="الفئة"></div>
+            <div class="tiles" id="pos-grid"></div>
+          </div>
+
+          <!-- الفاتورة الجارية: السلة هي نفسها الإيصال الورقي -->
+          <aside class="receipt-wrap" id="receipt" aria-labelledby="h-receipt">
+            <div class="receipt">
+              <header class="receipt-head">
+                <h2 id="h-receipt" data-store-name>قرطاسيتي</h2>
+                <p class="receipt-meta"><span id="cart-no"></span><span id="cart-date"></span></p>
+              </header>
+
+              <ul class="cart-lines" id="cart-lines" aria-label="أصناف الفاتورة"></ul>
+
+              <div class="receipt-fields">
+                <div class="field field-inline">
+                  <label for="cart-customer">العميل</label>
+                  <select class="input" id="cart-customer"></select>
+                </div>
+                <div class="field field-inline">
+                  <label for="cart-discount">خصم (<span data-currency>د.ل</span>)</label>
+                  <input class="input num" id="cart-discount" type="text" inputmode="decimal" autocomplete="off" placeholder="0.00" aria-describedby="cart-discount-error">
+                </div>
+                <p class="error" id="cart-discount-error" hidden></p>
+              </div>
+
+              <dl class="totals" aria-live="polite">
+                <div class="total-row"><dt>المجموع</dt><dd id="cart-subtotal">0.00</dd></div>
+                <div class="total-row" id="cart-discount-row" hidden><dt>الخصم</dt><dd id="cart-discount-value">0.00</dd></div>
+                <div class="total-row total-grand"><dt>الإجمالي</dt><dd><span id="cart-total">0.00</span> <span class="unit" data-currency>د.ل</span></dd></div>
+              </dl>
+
+              <button type="button" class="btn primary btn-block" id="checkout" data-action="checkout">إتمام البيع</button>
+              <button type="button" class="link-btn receipt-clear" id="cart-clear" data-action="clear-cart">إفراغ الفاتورة</button>
+            </div>
+          </aside>
+        </div>
+
+        <!-- شريط موجز يظهر على الشاشات الضيقة حين تكون الفاتورة أسفل الأصناف -->
+        <a class="cart-bar" id="cart-bar" href="#receipt" data-action="scroll-receipt" hidden>
+          <span id="cart-bar-count"></span>
+          <strong><span id="cart-bar-total"></span> <span class="unit" data-currency>د.ل</span></strong>
+          <span class="cart-bar-go">عرض الفاتورة</span>
+        </a>
+      </section>
+
+      <!-- ---------- 4) الفواتير ---------- -->
+      <section class="view" id="view-invoices" aria-labelledby="h-invoices" hidden>
+        <header class="page-head">
+          <div>
+            <h1 id="h-invoices">الفواتير</h1>
+            <p class="page-sub" id="sales-summary"></p>
+          </div>
+          <a class="btn primary" href="#pos"><svg class="icon"><use href="#i-plus"/></svg>بيع جديد</a>
+        </header>
+
+        <div class="panel">
+          <div class="toolbar">
+            <label class="search">
+              <span class="sr-only">بحث في الفواتير</span>
+              <svg class="icon"><use href="#i-search"/></svg>
+              <input class="input" type="search" id="sales-search" placeholder="رقم الفاتورة أو اسم العميل أو الصنف" autocomplete="off">
+            </label>
+            <div class="segmented" role="group" aria-label="الفترة">
+              <button type="button" data-period="today" aria-pressed="false">اليوم</button>
+              <button type="button" data-period="week" aria-pressed="false">آخر 7 أيام</button>
+              <button type="button" data-period="month" aria-pressed="false">هذا الشهر</button>
+              <button type="button" data-period="all" aria-pressed="true">الكل</button>
+            </div>
+            <span class="toolbar-count" id="sales-shown" aria-live="polite"></span>
+          </div>
+
+          <table class="data-table" id="sales-table">
+            <thead>
+              <tr>
+                <th scope="col">رقم الفاتورة</th>
+                <th scope="col" class="c-extra">التاريخ</th>
+                <th scope="col" class="c-extra">العميل</th>
+                <th scope="col" class="c-extra c-md-hide num">القطع</th>
+                <th scope="col" class="num">الإجمالي (<span data-currency>د.ل</span>)</th>
+                <th scope="col" class="c-actions"><span class="sr-only">إجراءات</span></th>
+              </tr>
+            </thead>
+            <tbody id="sales-body"></tbody>
+          </table>
+          <div id="sales-empty"></div>
+        </div>
+      </section>
+
+      <!-- ---------- 5) العملاء والموردون ---------- -->
+      <section class="view" id="view-contacts" aria-labelledby="h-contacts" hidden>
+        <header class="page-head">
+          <div>
+            <h1 id="h-contacts">العملاء والموردون</h1>
+            <p class="page-sub" id="contacts-summary"></p>
+          </div>
+          <button type="button" class="btn primary" data-action="add-contact"><svg class="icon"><use href="#i-plus"/></svg><span id="add-contact-label">إضافة عميل</span></button>
+        </header>
+
+        <div class="panel">
+          <div class="tabs" role="tablist" aria-label="نوع الجهة">
+            <button type="button" class="tab" role="tab" data-contact-tab="customer" aria-selected="true">العملاء <span class="tab-count" id="count-customer"></span></button>
+            <button type="button" class="tab" role="tab" data-contact-tab="supplier" aria-selected="false">الموردون <span class="tab-count" id="count-supplier"></span></button>
+          </div>
+
+          <div class="toolbar">
+            <label class="search">
+              <span class="sr-only">بحث في الأسماء</span>
+              <svg class="icon"><use href="#i-search"/></svg>
+              <input class="input" type="search" id="contacts-search" placeholder="ابحث بالاسم أو الهاتف" autocomplete="off">
+            </label>
+            <span class="toolbar-count" id="contacts-shown" aria-live="polite"></span>
+          </div>
+
+          <table class="data-table" id="contacts-table">
+            <thead>
+              <tr>
+                <th scope="col">الاسم</th>
+                <th scope="col" class="c-key-head">الهاتف</th>
+                <th scope="col" class="c-extra">العنوان</th>
+                <th scope="col" class="c-extra c-md-hide">ملاحظات</th>
+                <th scope="col" class="c-extra num" id="contacts-purchases-head">المشتريات (<span data-currency>د.ل</span>)</th>
+                <th scope="col" class="c-actions"><span class="sr-only">إجراءات</span></th>
+              </tr>
+            </thead>
+            <tbody id="contacts-body"></tbody>
+          </table>
+          <div id="contacts-empty"></div>
+        </div>
+      </section>
+
+      <!-- ---------- 6) الإعدادات ---------- -->
+      <section class="view" id="view-settings" aria-labelledby="h-settings" hidden>
+        <header class="page-head">
+          <div>
+            <h1 id="h-settings">الإعدادات</h1>
+            <p class="page-sub" id="settings-summary"></p>
+          </div>
+        </header>
+
+        <div class="settings">
+          <section class="settings-row" aria-labelledby="h-store">
+            <div class="settings-label">
+              <h2 id="h-store">بيانات المحل</h2>
+              <p>تُطبع في رأس كل فاتورة. هكذا ستظهر:</p>
+              <div class="receipt receipt-preview" aria-hidden="true">
+                <header class="receipt-head">
+                  <strong id="preview-name">قرطاسيتي</strong>
+                  <p class="receipt-meta" id="preview-contact"></p>
+                </header>
+                <div class="total-row total-grand"><span>الإجمالي</span><span>12.50 <span class="unit" id="preview-currency">د.ل</span></span></div>
+              </div>
+            </div>
+            <form class="panel settings-panel" id="store-form" novalidate>
+              <div class="field">
+                <label for="s-name">اسم المحل</label>
+                <input class="input" id="s-name" name="storeName" type="text" maxlength="40" autocomplete="off" aria-describedby="s-name-error">
+                <p class="error" id="s-name-error" hidden></p>
+              </div>
+              <div class="field-row">
+                <div class="field">
+                  <label for="s-phone">الهاتف</label>
+                  <input class="input num" id="s-phone" name="phone" type="tel" maxlength="20" autocomplete="off" aria-describedby="s-phone-error">
+                  <p class="error" id="s-phone-error" hidden></p>
+                </div>
+                <div class="field">
+                  <label for="s-currency">رمز العملة</label>
+                  <input class="input" id="s-currency" name="currency" type="text" maxlength="6" autocomplete="off" aria-describedby="s-currency-error">
+                  <p class="error" id="s-currency-error" hidden></p>
+                </div>
+              </div>
+              <div class="field">
+                <label for="s-address">العنوان</label>
+                <input class="input" id="s-address" name="address" type="text" maxlength="80" autocomplete="off">
+              </div>
+              <div class="form-actions">
+                <button type="submit" class="btn primary">حفظ بيانات المحل</button>
+              </div>
+            </form>
+          </section>
+
+          <section class="settings-row" aria-labelledby="h-backup">
+            <div class="settings-label">
+              <h2 id="h-backup">النسخ الاحتياطي</h2>
+              <p>البيانات محفوظة في هذا المتصفح على هذا الجهاز فقط، ومسح بيانات المتصفح يمسحها. نزّل نسخة احتياطية بانتظام.</p>
+            </div>
+            <div class="panel settings-panel">
+              <dl class="facts" id="storage-facts"></dl>
+              <div class="form-actions">
+                <button type="button" class="btn" data-action="export"><svg class="icon"><use href="#i-download"/></svg>تنزيل نسخة احتياطية</button>
+                <button type="button" class="btn" data-action="import"><svg class="icon"><use href="#i-upload"/></svg>استرجاع من نسخة</button>
+                <input type="file" id="import-file" accept="application/json,.json" hidden>
+              </div>
+              <p class="error" id="import-error" hidden></p>
+            </div>
+          </section>
+
+          <section class="settings-row" aria-labelledby="h-danger">
+            <div class="settings-label">
+              <h2 id="h-danger">مسح البيانات</h2>
+              <p>لا يمكن التراجع عن المسح. نزّل نسخة احتياطية أولاً إن كنت قد تحتاج إلى البيانات.</p>
+            </div>
+            <div class="panel settings-panel">
+              <div class="danger-row">
+                <div><strong>استعادة البيانات التجريبية</strong><p>يستبدل كل البيانات الحالية بأصناف وفواتير للتجربة.</p></div>
+                <button type="button" class="btn danger" data-action="load-demo">استعادة البيانات التجريبية</button>
+              </div>
+              <div class="danger-row">
+                <div><strong>مسح كل البيانات</strong><p>يحذف الأصناف والفواتير والعملاء والموردين ويبدأ المنظومة فارغة.</p></div>
+                <button type="button" class="btn danger" data-action="clear-all">مسح كل البيانات</button>
+              </div>
+            </div>
+          </section>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- =====================================================================
+       النوافذ (dialog): نموذج الصنف، التزويد، العميل/المورد، الفاتورة، التأكيد
+       ===================================================================== -->
+
+  <!-- نموذج إضافة صنف أو تعديله -->
+  <dialog class="dialog" id="product-dialog" aria-labelledby="product-dialog-title">
+    <form id="product-form" novalidate>
+      <header class="dialog-head">
+        <h2 id="product-dialog-title">إضافة صنف</h2>
+        <button type="button" class="icon-btn" data-close aria-label="إغلاق"><svg class="icon"><use href="#i-close"/></svg></button>
+      </header>
+      <div class="dialog-body">
+        <div class="field">
+          <label for="p-name">اسم الصنف</label>
+          <input class="input" id="p-name" name="name" type="text" maxlength="60" autocomplete="off" aria-describedby="p-name-error">
+          <p class="error" id="p-name-error" hidden></p>
+        </div>
+        <div class="field">
+          <label for="p-category">الفئة</label>
+          <input class="input" id="p-category" name="category" type="text" list="category-options" maxlength="30" autocomplete="off" aria-describedby="p-category-hint p-category-error">
+          <datalist id="category-options"></datalist>
+          <p class="hint" id="p-category-hint">اختر فئة موجودة أو اكتب اسم فئة جديدة.</p>
+          <p class="error" id="p-category-error" hidden></p>
+        </div>
+        <div class="field-row field-row-3">
+          <div class="field">
+            <label for="p-price">السعر (<span data-currency>د.ل</span>)</label>
+            <input class="input num" id="p-price" name="price" type="text" inputmode="decimal" autocomplete="off" placeholder="0.00" aria-describedby="p-price-error">
+            <p class="error" id="p-price-error" hidden></p>
+          </div>
+          <div class="field">
+            <label for="p-qty">الكمية المتوفرة</label>
+            <input class="input num" id="p-qty" name="qty" type="text" inputmode="numeric" autocomplete="off" placeholder="0" aria-describedby="p-qty-error">
+            <p class="error" id="p-qty-error" hidden></p>
+          </div>
+          <div class="field">
+            <label for="p-min">حد التنبيه</label>
+            <input class="input num" id="p-min" name="minQty" type="text" inputmode="numeric" autocomplete="off" placeholder="5" aria-describedby="p-min-hint p-min-error">
+            <p class="error" id="p-min-error" hidden></p>
+          </div>
+        </div>
+        <p class="hint" id="p-min-hint">يظهر الصنف في تنبيهات المخزون المنخفض حين تصل كميته إلى حد التنبيه أو أقل.</p>
+      </div>
+      <footer class="dialog-foot">
+        <button type="button" class="btn" data-close>إلغاء</button>
+        <button type="submit" class="btn primary" id="product-submit">إضافة الصنف</button>
+      </footer>
+    </form>
+  </dialog>
+
+  <!-- تزويد المخزون بكمية واردة -->
+  <dialog class="dialog dialog-sm" id="restock-dialog" aria-labelledby="restock-title">
+    <form id="restock-form" novalidate>
+      <header class="dialog-head">
+        <h2 id="restock-title">تزويد المخزون</h2>
+        <button type="button" class="icon-btn" data-close aria-label="إغلاق"><svg class="icon"><use href="#i-close"/></svg></button>
+      </header>
+      <div class="dialog-body">
+        <p class="dialog-lead"><strong id="restock-name"></strong><span id="restock-current"></span></p>
+        <div class="field">
+          <label for="restock-qty">الكمية الواردة</label>
+          <input class="input num" id="restock-qty" name="amount" type="text" inputmode="numeric" autocomplete="off" aria-describedby="restock-after restock-qty-error">
+          <p class="error" id="restock-qty-error" hidden></p>
+          <p class="hint" id="restock-after"></p>
+        </div>
+      </div>
+      <footer class="dialog-foot">
+        <button type="button" class="btn" data-close>إلغاء</button>
+        <button type="submit" class="btn primary">إضافة إلى المخزون</button>
+      </footer>
+    </form>
+  </dialog>
+
+  <!-- نموذج عميل أو مورد -->
+  <dialog class="dialog" id="contact-dialog" aria-labelledby="contact-dialog-title">
+    <form id="contact-form" novalidate>
+      <header class="dialog-head">
+        <h2 id="contact-dialog-title">إضافة عميل</h2>
+        <button type="button" class="icon-btn" data-close aria-label="إغلاق"><svg class="icon"><use href="#i-close"/></svg></button>
+      </header>
+      <div class="dialog-body">
+        <fieldset class="field">
+          <legend>النوع</legend>
+          <div class="segmented segmented-radio">
+            <label><input type="radio" name="type" value="customer" checked><span>عميل</span></label>
+            <label><input type="radio" name="type" value="supplier"><span>مورد</span></label>
+          </div>
+        </fieldset>
+        <div class="field">
+          <label for="c-name">الاسم</label>
+          <input class="input" id="c-name" name="name" type="text" maxlength="60" autocomplete="off" aria-describedby="c-name-error">
+          <p class="error" id="c-name-error" hidden></p>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label for="c-phone">الهاتف</label>
+            <input class="input num" id="c-phone" name="phone" type="tel" maxlength="20" autocomplete="off" placeholder="0910000000" aria-describedby="c-phone-error">
+            <p class="error" id="c-phone-error" hidden></p>
+          </div>
+          <div class="field">
+            <label for="c-address">العنوان</label>
+            <input class="input" id="c-address" name="address" type="text" maxlength="80" autocomplete="off">
+          </div>
+        </div>
+        <div class="field">
+          <label for="c-notes">ملاحظات</label>
+          <textarea class="input" id="c-notes" name="notes" rows="2" maxlength="160"></textarea>
+        </div>
+      </div>
+      <footer class="dialog-foot">
+        <button type="button" class="btn" data-close>إلغاء</button>
+        <button type="submit" class="btn primary" id="contact-submit">إضافة العميل</button>
+      </footer>
+    </form>
+  </dialog>
+
+  <!-- عرض فاتورة وطباعتها -->
+  <dialog class="dialog dialog-invoice" id="invoice-dialog" aria-labelledby="invoice-dialog-title">
+    <header class="dialog-head">
+      <h2 id="invoice-dialog-title">فاتورة</h2>
+      <button type="button" class="icon-btn" data-close aria-label="إغلاق"><svg class="icon"><use href="#i-close"/></svg></button>
+    </header>
+    <div class="dialog-body dialog-body-tinted">
+      <div class="receipt" id="invoice-receipt"></div>
+    </div>
+    <footer class="dialog-foot">
+      <button type="button" class="btn" data-action="download-invoice"><svg class="icon"><use href="#i-download"/></svg>تنزيل</button>
+      <button type="button" class="btn primary" data-action="print-invoice"><svg class="icon"><use href="#i-print"/></svg>طباعة</button>
+    </footer>
+  </dialog>
+
+  <!-- تأكيد الإجراءات التي لا يمكن التراجع عنها -->
+  <dialog class="dialog dialog-sm" id="confirm-dialog" aria-labelledby="confirm-title" aria-describedby="confirm-text">
+    <header class="dialog-head">
+      <h2 id="confirm-title"></h2>
+    </header>
+    <div class="dialog-body">
+      <p id="confirm-text"></p>
+    </div>
+    <footer class="dialog-foot">
+      <button type="button" class="btn" data-close>إلغاء</button>
+      <button type="button" class="btn" id="confirm-ok"></button>
+    </footer>
+  </dialog>
+
+  <div class="toasts" id="toasts" role="status" aria-live="polite"></div>
+
+  <!-- منطقة الطباعة: تُملأ بالفاتورة قبل الطباعة وتُخفى على الشاشة -->
+  <div id="print-area" aria-hidden="true"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
