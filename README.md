@@ -3,7 +3,7 @@
 Inventory, point of sale, invoices, and customers/suppliers for a stationery shop.
 Arabic (RTL) interface built with plain **HTML, CSS and vanilla JavaScript**. No frameworks, no build step, no server.
 
-**Live:** https://fix-07.github.io/qartasia/
+**Live:** https://qartasia.vercel.app
 
 ## Run locally
 
